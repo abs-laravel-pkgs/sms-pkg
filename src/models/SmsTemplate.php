@@ -22,6 +22,10 @@ class SmsTemplate extends Model {
 		'company_id',
 	];
 
+	public function params() {
+		return $this->hasMany('Abs\SmsPkg\SmsTemplateParameter');
+	}
+
 	public static function createFromObject($record_data) {
 
 		$errors = [];
