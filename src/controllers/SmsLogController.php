@@ -1,7 +1,7 @@
 <?php
 
 namespace Abs\SmsPkg;
-use Abs\SmsPkg\SmsTemplate;
+use Abs\SmsPkg\SmsLog;
 use App\Address;
 use App\Country;
 use App\Http\Controllers\Controller;
@@ -12,13 +12,13 @@ use Illuminate\Http\Request;
 use Validator;
 use Yajra\Datatables\Datatables;
 
-class SmsTemplateController extends Controller {
+class SmsLogController extends Controller {
 
 	public function __construct() {
 	}
 
-	public function getSmsTemplateList(Request $request) {
-		$sms_list = SmsTemplate::withTrashed()
+	public function getSmsLogList(Request $request) {
+		$sms_list = SmsLog::withTrashed()
 			->select(
 				'smss.id',
 				'smss.code',
@@ -63,7 +63,7 @@ class SmsTemplateController extends Controller {
 						<img src="' . $edit_img . '" alt="View" class="img-responsive">
 					</a>
 					<a href="javascript:;" data-toggle="modal" data-target="#delete_sms"
-					onclick="angular.element(this).scope().deleteSmsTemplate(' . $sms_list->id . ')" dusk = "delete-btn" title="Delete">
+					onclick="angular.element(this).scope().deleteSmsLog(' . $sms_list->id . ')" dusk = "delete-btn" title="Delete">
 					<img src="' . $delete_img . '" alt="delete" class="img-responsive">
 					</a>
 					';
@@ -71,13 +71,13 @@ class SmsTemplateController extends Controller {
 			->make(true);
 	}
 
-	public function getSmsTemplateFormData($id = NULL) {
+	public function getSmsLogFormData($id = NULL) {
 		if (!$id) {
-			$sms = new SmsTemplate;
+			$sms = new SmsLog;
 			$address = new Address;
 			$action = 'Add';
 		} else {
-			$sms = SmsTemplate::withTrashed()->find($id);
+			$sms = SmsLog::withTrashed()->find($id);
 			$address = Address::where('address_of_id', 24)->where('entity_id', $id)->first();
 			if (!$address) {
 				$address = new Address;
@@ -92,14 +92,14 @@ class SmsTemplateController extends Controller {
 		return response()->json($this->data);
 	}
 
-	public function saveSmsTemplate(Request $request) {
+	public function saveSmsLog(Request $request) {
 		// dd($request->all());
 		try {
 			$error_messages = [
-				'code.required' => 'SmsTemplate Code is Required',
+				'code.required' => 'SmsLog Code is Required',
 				'code.max' => 'Maximum 255 Characters',
 				'code.min' => 'Minimum 3 Characters',
-				'name.required' => 'SmsTemplate Name is Required',
+				'name.required' => 'SmsLog Name is Required',
 				'name.max' => 'Maximum 255 Characters',
 				'name.min' => 'Minimum 3 Characters',
 				'gst_number.required' => 'GST Number is Required',
@@ -130,13 +130,13 @@ class SmsTemplateController extends Controller {
 
 			DB::beginTransaction();
 			if (!$request->id) {
-				$sms = new SmsTemplate;
+				$sms = new SmsLog;
 				$sms->created_by_id = Auth::user()->id;
 				$sms->created_at = Carbon::now();
 				$sms->updated_at = NULL;
 				$address = new Address;
 			} else {
-				$sms = SmsTemplate::withTrashed()->find($request->id);
+				$sms = SmsLog::withTrashed()->find($request->id);
 				$sms->updated_by_id = Auth::user()->id;
 				$sms->updated_at = Carbon::now();
 				$address = Address::where('address_of_id', 24)->where('entity_id', $request->id)->first();
@@ -166,17 +166,17 @@ class SmsTemplateController extends Controller {
 
 			DB::commit();
 			if (!($request->id)) {
-				return response()->json(['success' => true, 'message' => ['SmsTemplate Details Added Successfully']]);
+				return response()->json(['success' => true, 'message' => ['SmsLog Details Added Successfully']]);
 			} else {
-				return response()->json(['success' => true, 'message' => ['SmsTemplate Details Updated Successfully']]);
+				return response()->json(['success' => true, 'message' => ['SmsLog Details Updated Successfully']]);
 			}
 		} catch (Exceprion $e) {
 			DB::rollBack();
 			return response()->json(['success' => false, 'errors' => ['Exception Error' => $e->getMessage()]]);
 		}
 	}
-	public function deleteSmsTemplate($id) {
-		$delete_status = SmsTemplate::withTrashed()->where('id', $id)->forceDelete();
+	public function deleteSmsLog($id) {
+		$delete_status = SmsLog::withTrashed()->where('id', $id)->forceDelete();
 		if ($delete_status) {
 			$address_delete = Address::where('address_of_id', 24)->where('entity_id', $id)->forceDelete();
 			return response()->json(['success' => true]);

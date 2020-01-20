@@ -4,7 +4,7 @@ namespace Abs\SmsPkg\Database\Seeds;
 use App\Permission;
 use Illuminate\Database\Seeder;
 
-class SmsPermissionSeeder extends Seeder {
+class SmsPkgPermissionSeeder extends Seeder {
 	/**
 	 * Run the database seeds.
 	 *
@@ -12,40 +12,60 @@ class SmsPermissionSeeder extends Seeder {
 	 */
 	public function run() {
 		$permissions = [
-			//MASTER > CUSTOMERS
-			4600 => [
-				'display_order' => 10,
-				'parent_id' => null,
-				'name' => 'smss',
-				'display_name' => 'Smss',
+			//SMS TEMPLATES
+			[
+				'display_order' => 99,
+				'parent' => null,
+				'name' => 'sms-templates',
+				'display_name' => 'SMS Templates',
 			],
-			4601 => [
+			[
 				'display_order' => 1,
-				'parent_id' => 4600,
-				'name' => 'add-sms',
+				'parent' => 'sms-templates',
+				'name' => 'add-sms-template',
 				'display_name' => 'Add',
 			],
-			4602 => [
+			[
 				'display_order' => 2,
-				'parent_id' => 4600,
-				'name' => 'edit-sms',
+				'parent' => 'sms-templates',
+				'name' => 'delete-sms-template',
 				'display_name' => 'Edit',
 			],
-			4603 => [
+			[
 				'display_order' => 3,
-				'parent_id' => 4600,
-				'name' => 'delete-sms',
+				'parent' => 'sms-templates',
+				'name' => 'delete-sms-template',
+				'display_name' => 'Delete',
+			],
+
+			//SMS EVENTS
+			[
+				'display_order' => 99,
+				'parent' => null,
+				'name' => 'sms-events',
+				'display_name' => 'SMS Events',
+			],
+			[
+				'display_order' => 1,
+				'parent' => 'sms-events',
+				'name' => 'add-sms-event',
+				'display_name' => 'Add',
+			],
+			[
+				'display_order' => 2,
+				'parent' => 'sms-events',
+				'name' => 'delete-sms-event',
+				'display_name' => 'Edit',
+			],
+			[
+				'display_order' => 3,
+				'parent' => 'sms-events',
+				'name' => 'delete-sms-event',
 				'display_name' => 'Delete',
 			],
 
 		];
+		Permission::createFromArrays($permissions);
 
-		foreach ($permissions as $permission_id => $permsion) {
-			$permission = Permission::firstOrNew([
-				'id' => $permission_id,
-			]);
-			$permission->fill($permsion);
-			$permission->save();
-		}
 	}
 }

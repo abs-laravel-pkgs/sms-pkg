@@ -1,6 +1,6 @@
 {
     "name": "abs/sms-pkg",
-    "description": "For Sms CRUD",
+    "description": "For SmsTemplate CRUD",
     "type": "library",
     "require":
     {},

@@ -1,14 +1,27 @@
 @if(config('custom.PKG_DEV'))
-    <?php $import_cron_job_pkg_path = 'packages/abs/import-cron-job-pkg/src/'?>
+    <?php $sms_pkg_path = 'packages/abs/sms-pkg/src/'?>
 @else
-    <?php $import_cron_job_pkg_path = ''?>
+    <?php $sms_pkg_path = ''?>
 @endif
 
+<!-- SMS TEMPLATES -->
 <script type="text/javascript">
-    var import_cron_job_list_template_url = "{{URL::asset($import_cron_job_pkg_path.'public/angular/import-cron-job-pkg/pages/import-cron-job/list.html')}}";
-    var import_cron_job_from_template_url = "{{URL::asset($import_cron_job_pkg_path.'public/angular/import-cron-job-pkg/pages/import-cron-job/form.html')}}";
-    var import_cron_job_from_data_check = "{{url('import-cron-job-pkg/import-jobs/get-from-data/')}}";
-    var import_cron_job_delete = "{{url('import-cron-job-pkg/import-job/delete/')}}";
-    var import_cron_job_template_file_url = "{{URL::asset('/public/templates/')}}";
+    var sms_template_list_template_url = "{{URL::asset($sms_pkg_path.'public/angular/sms-pkg/pages/sms-template/list.html')}}";
+    var sms_template_form_template_url = "{{URL::asset($sms_pkg_path.'public/angular/sms-pkg/pages/sms-template/form.html')}}";
+    var sms_template_delete_url = "{{url('sms-pkg/sms-template/delete/')}}";
 </script>
-<script type="text/javascript" src="{{URL::asset($import_cron_job_pkg_path.'public/angular/import-cron-job-pkg/pages/import-cron-job/controller.js')}}"></script>
+<script type="text/javascript" src="{{URL::asset($sms_pkg_path.'public/angular/sms-pkg/pages/sms-template/controller.js')}}"></script>
+
+<!-- SMS EVENTS -->
+<script type="text/javascript">
+    var sms_event_list_template_url = "{{URL::asset($sms_pkg_path.'public/angular/sms-pkg/pages/sms-event/list.html')}}";
+    var sms_event_form_template_url = "{{URL::asset($sms_pkg_path.'public/angular/sms-pkg/pages/sms-event/form.html')}}";
+    var sms_event_delete_url = "{{url('sms-pkg/sms-event/delete/')}}";
+</script>
+<script type="text/javascript" src="{{URL::asset($sms_pkg_path.'public/angular/sms-pkg/pages/sms-event/controller.js')}}"></script>
+
+<!-- SMS LOGS -->
+<script type="text/javascript">
+    var sms_log_list_template_url = "{{URL::asset($sms_pkg_path.'public/angular/sms-pkg/pages/sms-log/list.html')}}";
+</script>
+<script type="text/javascript" src="{{URL::asset($sms_pkg_path.'public/angular/sms-pkg/pages/sms-log/controller.js')}}"></script>
