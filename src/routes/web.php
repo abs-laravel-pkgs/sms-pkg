@@ -4,9 +4,9 @@ Route::group(['namespace' => 'Abs\SmsPkg', 'middleware' => ['web', 'auth'], 'pre
 
 	//SMS TEMPLATES
 	Route::get('/sms-templates/get-list', 'SmsTemplateController@getSmsTemplateList')->name('getSmsTemplateList');
-	Route::get('/sms-template/get-form-data/{id?}', 'SmsTemplateController@getSmsTemplateFormData')->name('getSmsTemplateFormData');
+	Route::get('/sms-template/get-form-data', 'SmsTemplateController@getSmsTemplateFormData')->name('getSmsTemplateFormData');
 	Route::post('/sms-template/save', 'SmsTemplateController@saveSmsTemplate')->name('saveSmsTemplate');
-	Route::get('/sms/delete/{id}', 'SmsTemplateController@deleteSmsTemplate')->name('deleteSmsTemplate');
+	Route::get('/sms/delete', 'SmsTemplateController@deleteSmsTemplate')->name('deleteSmsTemplate');
 
 	//SMS EVENTS
 	Route::get('/sms-events/get-list', 'SmsEventController@getSmsEventList')->name('getSmsEventList');

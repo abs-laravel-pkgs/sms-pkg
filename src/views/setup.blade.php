@@ -8,7 +8,6 @@
 <script type="text/javascript">
     var sms_template_list_template_url = "{{URL::asset($sms_pkg_path.'public/angular/sms-pkg/pages/sms-template/list.html')}}";
     var sms_template_form_template_url = "{{URL::asset($sms_pkg_path.'public/angular/sms-pkg/pages/sms-template/form.html')}}";
-    var sms_template_delete_url = "{{url('sms-pkg/sms-template/delete/')}}";
 </script>
 <script type="text/javascript" src="{{URL::asset($sms_pkg_path.'public/angular/sms-pkg/pages/sms-template/controller.js')}}"></script>
 

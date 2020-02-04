@@ -2,17 +2,17 @@ app.config(['$routeProvider', function($routeProvider) {
 
     $routeProvider.
     //CUSTOMER
-    when('/sms-pkg/sms/list', {
+    when('/sms-pkg/sms-template/list', {
         template: '<sms-template-list></sms-template-list>',
-        title: 'SmsTemplates',
+        title: 'SMS Templates',
     }).
-    when('/sms-pkg/sms/add', {
+    when('/sms-pkg/sms-template/add', {
         template: '<sms-template-form></sms-template-form>',
-        title: 'Add SmsTemplate',
+        title: 'Add SMS Template',
     }).
-    when('/sms-pkg/sms/edit/:id', {
+    when('/sms-pkg/sms-template/edit/:id', {
         template: '<sms-template-form></sms-template-form>',
-        title: 'Edit SmsTemplate',
+        title: 'Edit SMS Template',
     });
 }]);
 
@@ -21,75 +21,65 @@ app.component('smsTemplateList', {
     controller: function($http, $location, HelperService, $scope, $routeParams, $rootScope, $location) {
         $scope.loading = true;
         var self = this;
+        self.theme = admin_theme;
         self.hasPermission = HelperService.hasPermission;
-        var table_scroll;
-        table_scroll = $('.page-main-content').height() - 37;
-        var dataTable = $('#smss_list').DataTable({
-            "dom": cndn_dom_structure,
+        var dataTable = $('#sms_template_list').DataTable({
+            "dom": dom_structure,
             "language": {
-                // "search": "",
-                // "searchPlaceholder": "Search",
-                "lengthMenu": "Rows _MENU_",
+                "search": "",
+                "searchPlaceholder": "Search",
+                "lengthMenu": "Rows Per Page _MENU_",
                 "paginate": {
                     "next": '<i class="icon ion-ios-arrow-forward"></i>',
                     "previous": '<i class="icon ion-ios-arrow-back"></i>'
                 },
             },
+            stateSave: true,
             pageLength: 10,
             processing: true,
-            stateSaveCallback: function(settings, data) {
-                localStorage.setItem('CDataTables_' + settings.sInstance, JSON.stringify(data));
-            },
-            stateLoadCallback: function(settings) {
-                var state_save_val = JSON.parse(localStorage.getItem('CDataTables_' + settings.sInstance));
-                if (state_save_val) {
-                    $('#search_sms').val(state_save_val.search.search);
-                }
-                return JSON.parse(localStorage.getItem('CDataTables_' + settings.sInstance));
-            },
             serverSide: true,
             paging: true,
-            stateSave: true,
             ordering: false,
-            scrollY: table_scroll + "px",
-            scrollCollapse: true,
             ajax: {
                 url: laravel_routes['getSmsTemplateList'],
                 type: "GET",
                 dataType: "json",
                 data: function(d) {
-                    d.sms_code = $('#sms_code').val();
-                    d.sms_name = $('#sms_name').val();
-                    d.mobile_no = $('#mobile_no').val();
-                    d.email = $('#email').val();
-                },
+                    d.sms_name = $("#sms_name").val();
+                }
             },
-
             columns: [
-                { data: 'action', class: 'action', name: 'action', searchable: false },
-                { data: 'code', name: 'smss.code' },
-                { data: 'name', name: 'smss.name' },
-                { data: 'mobile_no', name: 'smss.mobile_no' },
-                { data: 'email', name: 'smss.email' },
+                { data: 'action', searchable: false, class: 'action' },
+                { data: 'name', name: 'sms_templates.name', searchable: true },
+                { data: 'description', name: 'sms_templates.description', searchable: true },
             ],
             "infoCallback": function(settings, start, end, max, total, pre) {
-                $('#table_info').html(total)
-                $('.foot_info').html('Showing ' + start + ' to ' + end + ' of ' + max + ' entries')
+                $('#table_info').html(total + '/' + max)
             },
             rowCallback: function(row, data) {
                 $(row).addClass('highlight-row');
-            }
+            },
+            initComplete: function() {
+                $('.search label input').focus();
+            },
         });
         $('.dataTables_length select').select2();
 
-        $scope.clear_search = function() {
-            $('#search_sms').val('');
-            $('#smss_list').DataTable().search('').draw();
-        }
+        /* Page Title Appended */
+        $('.page-header-content .display-inline-block .data-table-title').html('SMS Templates <span class="badge badge-secondary" id="table_info">0</span>');
+        $('.page-header-content .search.display-inline-block .add_close_button').html('<button type="button" class="btn btn-img btn-add-close"><img src="' + image_scr2 + '" class="img-responsive"></button>');
+        $('.page-header-content .refresh.display-inline-block').html('<button type="button" class="btn btn-refresh"><img src="' + image_scr3 + '" class="img-responsive"></button>');
+        /* Add & Filter Button Appended */
+        $('.page-header-content .alignment-right .add_new_button').html(
+            '<a href="#!/sms-pkg/sms-template/add" role="button" class="btn btn-secondary">Add New</a>' +
+            '<a role="button" id="open" data-toggle="modal"  data-target="#sms-tempalte-filter" class="btn btn-img"> <img src="' + image_scr + '" alt="Filter" onmouseover=this.src="' + image_scr1 + '" onmouseout=this.src="' + image_scr + '"></a>'
+        );
+        $('.btn-add-close').on("click", function() {
+            $('#sms_template_list').DataTable().search('').draw();
+        });
 
-        var dataTables = $('#smss_list').dataTable();
-        $("#search_sms").keyup(function() {
-            dataTables.fnFilter(this.value);
+        $('.btn-refresh').on("click", function() {
+            $('#sms_template_list').DataTable().ajax.reload();
         });
 
         //DELETE
@@ -99,42 +89,29 @@ app.component('smsTemplateList', {
         $scope.deleteConfirm = function() {
             $id = $('#sms_id').val();
             $http.get(
-                sms_delete_data_url + '/' + $id,
+                laravel_routes['deleteSmsTemplate'], {
+                    params: {
+                        id: $id,
+                    }
+                }
             ).then(function(response) {
                 if (response.data.success) {
-                    $noty = new Noty({
-                        type: 'success',
-                        layout: 'topRight',
-                        text: 'SmsTemplate Deleted Successfully',
-                    }).show();
-                    setTimeout(function() {
-                        $noty.close();
-                    }, 3000);
-                    $('#sms_template_list').DataTable().ajax.reload(function(json) {});
-                    $location.path('/sms-pkg/sms-template/list');
+                    custom_noty('success', response.data.message);
+                    $('#sms_template_list').DataTable().ajax.reload();
+                    $scope.$apply();
+                } else {
+                    custom_noty('error', errors);
                 }
             });
         }
 
         //FOR FILTER
-        $('#sms_code').on('keyup', function() {
-            dataTables.fnFilter();
-        });
         $('#sms_name').on('keyup', function() {
-            dataTables.fnFilter();
-        });
-        $('#mobile_no').on('keyup', function() {
-            dataTables.fnFilter();
-        });
-        $('#email').on('keyup', function() {
-            dataTables.fnFilter();
+            dataTable.draw();
         });
         $scope.reset_filter = function() {
             $("#sms_name").val('');
-            $("#sms_code").val('');
-            $("#mobile_no").val('');
-            $("#email").val('');
-            dataTables.fnFilter();
+            dataTable.draw();
         }
 
         $rootScope.loading = false;
@@ -145,147 +122,86 @@ app.component('smsTemplateList', {
 app.component('smsTemplateForm', {
     templateUrl: sms_template_form_template_url,
     controller: function($http, $location, HelperService, $scope, $routeParams, $rootScope) {
-        get_form_data_url = typeof($routeParams.id) == 'undefined' ? sms_get_form_data_url : sms_get_form_data_url + '/' + $routeParams.id;
         var self = this;
         self.hasPermission = HelperService.hasPermission;
         self.angular_routes = angular_routes;
         $http.get(
-            get_form_data_url
+            laravel_routes['getSmsTemplateFormData'], {
+                params: {
+                    id: typeof($routeParams.id) == 'undefined' ? null : $routeParams.id,
+                }
+            }
         ).then(function(response) {
-            // console.log(response);
-            self.sms = response.data.sms;
-            self.address = response.data.address;
-            self.country_list = response.data.country_list;
+            console.log(response.data);
+            self.sms_template = response.data.sms_template;
+            self.extras = response.data.extras;
             self.action = response.data.action;
+            self.theme = response.data.theme;
             $rootScope.loading = false;
             if (self.action == 'Edit') {
-                $scope.onSelectedCountry(self.address.country_id);
-                $scope.onSelectedState(self.address.state_id);
-                if (self.sms.deleted_at) {
-                    self.switch_value = 'Inactive';
-                } else {
+                if (self.sms_template.deleted_at == null) {
                     self.switch_value = 'Active';
+                } else {
+                    self.switch_value = 'Inactive';
                 }
             } else {
                 self.switch_value = 'Active';
-                self.state_list = [{ 'id': '', 'name': 'Select State' }];
-                self.city_list = [{ 'id': '', 'name': 'Select City' }];
             }
         });
 
         /* Tab Funtion */
         $('.btn-nxt').on("click", function() {
-            $('.cndn-tabs li.active').next().children('a').trigger("click");
+            $('.editDetails-tabs li.active').next().children('a').trigger("click");
             tabPaneFooter();
         });
         $('.btn-prev').on("click", function() {
-            $('.cndn-tabs li.active').prev().children('a').trigger("click");
+            $('.editDetails-tabs li.active').prev().children('a').trigger("click");
             tabPaneFooter();
         });
-        $('.btn-pills').on("click", function() {
-            tabPaneFooter();
-        });
-        $scope.btnNxt = function() {}
-        $scope.prev = function() {}
 
-        //SELECT STATE BASED COUNTRY
-        $scope.onSelectedCountry = function(id) {
-            sms_get_state_by_country = vendor_get_state_by_country;
-            $http.post(
-                sms_get_state_by_country, { 'country_id': id }
-            ).then(function(response) {
-                // console.log(response);
-                self.state_list = response.data.state_list;
+        //ADD PARAMETERS
+        $scope.addSmsTemplateParameters = function() {
+            self.sms_template.params.push({
+                id: '',
+                name: '',
+                type_id: '',
+                default_value: '',
+                field_type_id: '',
+                display_order: '',
             });
         }
-
-        //SELECT CITY BASED STATE
-        $scope.onSelectedState = function(id) {
-            sms_get_city_by_state = vendor_get_city_by_state
-            $http.post(
-                sms_get_city_by_state, { 'state_id': id }
-            ).then(function(response) {
-                // console.log(response);
-                self.city_list = response.data.city_list;
-            });
+        //REMOVE PARAMETERS
+        self.sms_template_removal_ids = [];
+        $scope.removeSmsTemplateParameters = function(index, parameter_id) {
+            if (parameter_id) {
+                self.sms_template_removal_ids.push(parameter_id);
+                $("#sms_template_removal_ids").val(JSON.stringify(self.sms_template_removal_ids));
+            }
+            self.sms_template.params.splice(index, 1);
         }
 
         var form_id = '#form';
         var v = jQuery(form_id).validate({
             ignore: '',
             rules: {
-                'code': {
-                    required: true,
-                    minlength: 3,
-                    maxlength: 255,
-                },
                 'name': {
                     required: true,
                     minlength: 3,
-                    maxlength: 255,
+                    maxlength: 191,
                 },
-                'cust_group': {
-                    maxlength: 100,
-                },
-                'gst_number': {
+                'description': {
                     required: true,
-                    maxlength: 100,
-                },
-                'dimension': {
-                    maxlength: 50,
-                },
-                'address_line1': {
                     minlength: 3,
                     maxlength: 255,
                 },
-                'address_line2': {
+                'content': {
+                    required: true,
                     minlength: 3,
                     maxlength: 255,
                 },
-                // 'pincode': {
-                //     required: true,
-                //     minlength: 6,
-                //     maxlength: 6,
-                // },
-            },
-            messages: {
-                'code': {
-                    maxlength: 'Maximum of 255 charaters',
-                },
-                'name': {
-                    maxlength: 'Maximum of 255 charaters',
-                },
-                'cust_group': {
-                    maxlength: 'Maximum of 100 charaters',
-                },
-                'dimension': {
-                    maxlength: 'Maximum of 50 charaters',
-                },
-                'gst_number': {
-                    maxlength: 'Maximum of 25 charaters',
-                },
-                'email': {
-                    maxlength: 'Maximum of 100 charaters',
-                },
-                'address_line1': {
-                    maxlength: 'Maximum of 255 charaters',
-                },
-                'address_line2': {
-                    maxlength: 'Maximum of 255 charaters',
-                },
-                // 'pincode': {
-                //     maxlength: 'Maximum of 6 charaters',
-                // },
             },
             invalidHandler: function(event, validator) {
-                $noty = new Noty({
-                    type: 'error',
-                    layout: 'topRight',
-                    text: 'You have errors,Please check all tabs'
-                }).show();
-                setTimeout(function() {
-                    $noty.close();
-                }, 3000)
+                custom_noty('error', 'You have errors,Please check all tabs');
             },
             submitHandler: function(form) {
                 let formData = new FormData($(form_id)[0]);
@@ -299,15 +215,8 @@ app.component('smsTemplateForm', {
                     })
                     .done(function(res) {
                         if (res.success == true) {
-                            $noty = new Noty({
-                                type: 'success',
-                                layout: 'topRight',
-                                text: res.message,
-                            }).show();
-                            setTimeout(function() {
-                                $noty.close();
-                            }, 3000);
-                            $location.path('/sms-pkg/sms/list');
+                            custom_noty('success', res.message);
+                            $location.path('/sms-pkg/sms-template/list');
                             $scope.$apply();
                         } else {
                             if (!res.success == true) {
@@ -316,31 +225,18 @@ app.component('smsTemplateForm', {
                                 for (var i in res.errors) {
                                     errors += '<li>' + res.errors[i] + '</li>';
                                 }
-                                $noty = new Noty({
-                                    type: 'error',
-                                    layout: 'topRight',
-                                    text: errors
-                                }).show();
-                                setTimeout(function() {
-                                    $noty.close();
-                                }, 3000);
+                                custom_noty('error', errors);
                             } else {
                                 $('#submit').button('reset');
-                                $location.path('/sms-pkg/sms/list');
+                                custom_noty('success', res.message);
+                                $location.path('/sms-pkg/sms-template/list');
                                 $scope.$apply();
                             }
                         }
                     })
                     .fail(function(xhr) {
                         $('#submit').button('reset');
-                        $noty = new Noty({
-                            type: 'error',
-                            layout: 'topRight',
-                            text: 'Something went wrong at server',
-                        }).show();
-                        setTimeout(function() {
-                            $noty.close();
-                        }, 3000);
+                        custom_noty('error', 'Something went wrong at server');
                     });
             }
         });

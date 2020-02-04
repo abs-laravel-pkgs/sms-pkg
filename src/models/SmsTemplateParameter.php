@@ -15,13 +15,12 @@ class SmsTemplateParameter extends Model {
 	use SoftDeletes;
 	protected $table = 'sms_template_parameters';
 	protected $fillable = [
-		'code',
+		'sms_template_id',
 		'name',
-		'cust_group',
-		'dimension',
-		'mobile_no',
-		'email',
-		'company_id',
+		'type_id',
+		'default_value',
+		'field_type_id',
+		// 'display_order',
 	];
 
 	public static function createFromObject($record_data) {

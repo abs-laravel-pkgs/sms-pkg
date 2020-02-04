@@ -13,17 +13,14 @@ class SmsTemplate extends Model {
 	use SoftDeletes;
 	protected $table = 'sms_templates';
 	protected $fillable = [
-		'code',
-		'name',
-		'cust_group',
-		'dimension',
-		'mobile_no',
-		'email',
 		'company_id',
+		'name',
+		'description',
+		'content',
 	];
 
 	public function params() {
-		return $this->hasMany('Abs\SmsPkg\SmsTemplateParameter');
+		return $this->hasMany('Abs\SmsPkg\SmsTemplateParameter', 'sms_template_id');
 	}
 
 	public static function createFromObject($record_data) {

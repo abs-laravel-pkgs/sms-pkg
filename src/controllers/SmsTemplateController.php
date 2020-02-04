@@ -1,9 +1,10 @@
 <?php
 
 namespace Abs\SmsPkg;
+use Abs\AttributePkg\FieldType;
+use Abs\Basic\Config;
 use Abs\SmsPkg\SmsTemplate;
-use App\Address;
-use App\Country;
+use Abs\SmsPkg\SmsTemplateParameter;
 use App\Http\Controllers\Controller;
 use Auth;
 use Carbon\Carbon;
@@ -15,79 +16,62 @@ use Yajra\Datatables\Datatables;
 class SmsTemplateController extends Controller {
 
 	public function __construct() {
+		$this->data['theme'] = config('custom.admin_theme');
 	}
 
 	public function getSmsTemplateList(Request $request) {
 		$sms_list = SmsTemplate::withTrashed()
 			->select(
-				'smss.id',
-				'smss.code',
-				'smss.name',
-				DB::raw('IF(smss.mobile_no IS NULL,"--",smss.mobile_no) as mobile_no'),
-				DB::raw('IF(smss.email IS NULL,"--",smss.email) as email'),
-				DB::raw('IF(smss.deleted_at IS NULL,"Active","Inactive") as status')
+				'sms_templates.*',
+				DB::raw('IF(sms_templates.deleted_at IS NULL,"Active","Inactive") as status')
 			)
-			->where('smss.company_id', Auth::user()->company_id)
-			->where(function ($query) use ($request) {
-				if (!empty($request->sms_code)) {
-					$query->where('smss.code', 'LIKE', '%' . $request->sms_code . '%');
-				}
-			})
+			->where('sms_templates.company_id', Auth::user()->company_id)
 			->where(function ($query) use ($request) {
 				if (!empty($request->sms_name)) {
-					$query->where('smss.name', 'LIKE', '%' . $request->sms_name . '%');
+					$query->where('sms_templates.name', 'LIKE', '%' . $request->sms_name . '%');
 				}
 			})
-			->where(function ($query) use ($request) {
-				if (!empty($request->mobile_no)) {
-					$query->where('smss.mobile_no', 'LIKE', '%' . $request->mobile_no . '%');
-				}
-			})
-			->where(function ($query) use ($request) {
-				if (!empty($request->email)) {
-					$query->where('smss.email', 'LIKE', '%' . $request->email . '%');
-				}
-			})
-			->orderby('smss.id', 'desc');
+			->orderby('sms_templates.id', 'desc');
 
 		return Datatables::of($sms_list)
-			->addColumn('code', function ($sms_list) {
+			->addColumn('name', function ($sms_list) {
 				$status = $sms_list->status == 'Active' ? 'green' : 'red';
-				return '<span class="status-indicator ' . $status . '"></span>' . $sms_list->code;
+				return '<span class="status-indicator ' . $status . '"></span>' . $sms_list->name;
 			})
 			->addColumn('action', function ($sms_list) {
-				$edit_img = asset('public/theme/img/table/cndn/edit.svg');
-				$delete_img = asset('public/theme/img/table/cndn/delete.svg');
-				return '
-					<a href="#!/sms-pkg/sms/edit/' . $sms_list->id . '">
-						<img src="' . $edit_img . '" alt="View" class="img-responsive">
-					</a>
-					<a href="javascript:;" data-toggle="modal" data-target="#delete_sms"
-					onclick="angular.element(this).scope().deleteSmsTemplate(' . $sms_list->id . ')" dusk = "delete-btn" title="Delete">
-					<img src="' . $delete_img . '" alt="delete" class="img-responsive">
-					</a>
-					';
+				$edit = asset('public/themes/' . $this->data['theme'] . '/img/content/table/edit-yellow.svg');
+				$edit_active = asset('public/themes/' . $this->data['theme'] . '/img/content/table/edit-yellow-active.svg');
+				$delete = asset('public/themes/' . $this->data['theme'] . '/img/content/table/delete-default.svg');
+				$delete_active = asset('public/themes/' . $this->data['theme'] . '/img/content/table/delete-active.svg');
+				return '<a href="#!/sms-pkg/sms-template/edit/' . $sms_list->id . '">
+						<img src="' . $edit . '" alt="Edit" class="img-responsive" onmouseover=this.src="' . $edit_active . '" onmouseout=this.src="' . $edit . '" ></a>
+						<a href="javascript:;" data-toggle="modal" data-target="#delete_sms"
+						onclick="angular.element(this).scope().deleteSmsTemplate(' . $sms_list->id . ')" dusk = "delete-btn" title="Delete">
+						<img src="' . $delete . '" alt="Delete" class="img-responsive" onmouseover=this.src="' . $delete_active . '" onmouseout=this.src="' . $delete . '" >
+						</a>';
 			})
 			->make(true);
 	}
 
-	public function getSmsTemplateFormData($id = NULL) {
+	public function getSmsTemplateFormData(Request $request) {
+		$id = $request->id;
 		if (!$id) {
-			$sms = new SmsTemplate;
-			$address = new Address;
+			$sms_template = new SmsTemplate;
+			$sms_template->params = [];
 			$action = 'Add';
 		} else {
-			$sms = SmsTemplate::withTrashed()->find($id);
-			$address = Address::where('address_of_id', 24)->where('entity_id', $id)->first();
-			if (!$address) {
-				$address = new Address;
-			}
+			$sms_template = SmsTemplate::withTrashed()->where('id', $id)->with([
+				'params',
+			])->first();
 			$action = 'Edit';
 		}
-		$this->data['country_list'] = $country_list = Collect(Country::select('id', 'name')->get())->prepend(['id' => '', 'name' => 'Select Country']);
-		$this->data['sms'] = $sms;
-		$this->data['address'] = $address;
+		$this->data['extras'] = [
+			'type_list' => collect(Config::where('config_type_id', 5)->select('name', 'id')->get())->prepend(['name' => 'Select Type', 'id' => '']),
+			'field_type_list' => collect(FieldType::select('name', 'id')->get())->prepend(['name' => 'Select Field Type', 'id' => '']),
+		];
+		$this->data['sms_template'] = $sms_template;
 		$this->data['action'] = $action;
+		$this->data['theme'];
 
 		return response()->json($this->data);
 	}
@@ -96,90 +80,113 @@ class SmsTemplateController extends Controller {
 		// dd($request->all());
 		try {
 			$error_messages = [
-				'code.required' => 'SmsTemplate Code is Required',
-				'code.max' => 'Maximum 255 Characters',
-				'code.min' => 'Minimum 3 Characters',
-				'name.required' => 'SmsTemplate Name is Required',
-				'name.max' => 'Maximum 255 Characters',
-				'name.min' => 'Minimum 3 Characters',
-				'gst_number.required' => 'GST Number is Required',
-				'gst_number.max' => 'Maximum 191 Numbers',
-				'mobile_no.max' => 'Maximum 25 Numbers',
-				// 'email.required' => 'Email is Required',
-				'address_line1.required' => 'Address Line 1 is Required',
-				'address_line1.max' => 'Maximum 255 Characters',
-				'address_line1.min' => 'Minimum 3 Characters',
-				'address_line2.max' => 'Maximum 255 Characters',
-				// 'pincode.required' => 'Pincode is Required',
-				// 'pincode.max' => 'Maximum 6 Characters',
-				// 'pincode.min' => 'Minimum 6 Characters',
+				'name.required' => 'SMS Template Name is Required',
+				'name.unique' => 'SMS Template Name is already taken',
+				'description.required' => 'Description is Required',
+				'content.required' => 'Content is Required',
 			];
 			$validator = Validator::make($request->all(), [
-				'code' => 'required|max:255|min:3',
-				'name' => 'required|max:255|min:3',
-				'gst_number' => 'required|max:191',
-				'mobile_no' => 'nullable|max:25',
-				// 'email' => 'nullable',
-				'address_line1' => 'required|max:255|min:3',
-				'address_line2' => 'max:255',
-				// 'pincode' => 'required|max:6|min:6',
+				'name' => [
+					'required',
+					'unique:sms_templates,name,' . $request->id . ',id,company_id,' . Auth::user()->company_id,
+				],
+				'description' => 'required',
+				'content' => 'required',
 			], $error_messages);
 			if ($validator->fails()) {
 				return response()->json(['success' => false, 'errors' => $validator->errors()->all()]);
 			}
 
+			//VALIDATE FOR SMS-TEMPLATE-PARAMETERS
+			if (isset($request->params) && !empty($request->params)) {
+				$error_messages_1 = [
+					'name.required' => 'Name is required',
+					'type_id.required' => 'Type is required',
+					'default_value.required' => 'Default Value is required',
+					'field_type_id.required' => 'Field Type is required',
+				];
+
+				foreach ($request->params as $column_key => $param) {
+					$validator_1 = Validator::make($param, [
+						'name' => 'required',
+						'type_id' => 'required',
+						'default_value' => 'required',
+						'field_type_id' => 'required',
+					], $error_messages_1);
+
+					if ($validator_1->fails()) {
+						return response()->json(['success' => false, 'errors' => $validator_1->errors()->all()]);
+					}
+				}
+			}
+
 			DB::beginTransaction();
 			if (!$request->id) {
-				$sms = new SmsTemplate;
-				$sms->created_by_id = Auth::user()->id;
-				$sms->created_at = Carbon::now();
-				$sms->updated_at = NULL;
-				$address = new Address;
+				$sms_template = new SmsTemplate;
+				$sms_template->created_by_id = Auth::user()->id;
+				$sms_template->created_at = Carbon::now();
+				$sms_template->updated_at = NULL;
 			} else {
-				$sms = SmsTemplate::withTrashed()->find($request->id);
-				$sms->updated_by_id = Auth::user()->id;
-				$sms->updated_at = Carbon::now();
-				$address = Address::where('address_of_id', 24)->where('entity_id', $request->id)->first();
+				$sms_template = SmsTemplate::withTrashed()->find($request->id);
+				$sms_template->updated_by_id = Auth::user()->id;
+				$sms_template->updated_at = Carbon::now();
 			}
-			$sms->fill($request->all());
-			$sms->company_id = Auth::user()->company_id;
+			$sms_template->fill($request->all());
+			$sms_template->company_id = Auth::user()->company_id;
 			if ($request->status == 'Inactive') {
-				$sms->deleted_at = Carbon::now();
-				$sms->deleted_by_id = Auth::user()->id;
+				$sms_template->deleted_at = Carbon::now();
+				$sms_template->deleted_by_id = Auth::user()->id;
 			} else {
-				$sms->deleted_by_id = NULL;
-				$sms->deleted_at = NULL;
+				$sms_template->deleted_by_id = NULL;
+				$sms_template->deleted_at = NULL;
 			}
-			$sms->gst_number = $request->gst_number;
-			$sms->save();
+			$sms_template->save();
 
-			if (!$address) {
-				$address = new Address;
+			//DELETE SMS-TEMPLATE-PARAMETERS
+			if (!empty($request->sms_template_removal_ids)) {
+				$sms_template_removal_ids = json_decode($request->sms_template_removal_ids, true);
+				SmsTemplateParameter::withTrashed()->whereIn('id', $sms_template_removal_ids)->forcedelete();
 			}
-			$address->fill($request->all());
-			$address->company_id = Auth::user()->company_id;
-			$address->address_of_id = 24;
-			$address->entity_id = $sms->id;
-			$address->address_type_id = 40;
-			$address->name = 'Primary Address';
-			$address->save();
+
+			if (isset($request->params) && !empty($request->params)) {
+				foreach ($request->params as $key => $param) {
+					$sms_template_parameter = SmsTemplateParameter::withTrashed()->firstOrNew(['id' => $param['id']]);
+					$sms_template_parameter->fill($param);
+					if (!is_null($param['display_order'])) {
+						$sms_template_parameter->display_order = $param['display_order'];
+					}
+					$sms_template_parameter->sms_template_id = $sms_template->id;
+					if (empty($param['id'])) {
+						$sms_template_parameter->created_by_id = Auth::user()->id;
+						$sms_template_parameter->created_at = Carbon::now();
+					} else {
+						$sms_template_parameter->updated_by_id = Auth::user()->id;
+						$sms_template_parameter->updated_at = Carbon::now();
+					}
+					$sms_template_parameter->save();
+				}
+			}
 
 			DB::commit();
 			if (!($request->id)) {
-				return response()->json(['success' => true, 'message' => ['SmsTemplate Details Added Successfully']]);
+				return response()->json(['success' => true, 'message' => ['SMS Template Details Added Successfully']]);
 			} else {
-				return response()->json(['success' => true, 'message' => ['SmsTemplate Details Updated Successfully']]);
+				return response()->json(['success' => true, 'message' => ['SMS Template Details Updated Successfully']]);
 			}
 		} catch (Exceprion $e) {
 			DB::rollBack();
 			return response()->json(['success' => false, 'errors' => ['Exception Error' => $e->getMessage()]]);
 		}
 	}
-	public function deleteSmsTemplate($id) {
-		$delete_status = SmsTemplate::withTrashed()->where('id', $id)->forceDelete();
-		if ($delete_status) {
-			$address_delete = Address::where('address_of_id', 24)->where('entity_id', $id)->forceDelete();
-			return response()->json(['success' => true]);
+	public function deleteSmsTemplate(Request $request) {
+		DB::beginTransaction();
+		try {
+			SmsTemplate::withTrashed()->where('id', $request->id)->forceDelete();
+			DB::commit();
+			return response()->json(['success' => true, 'message' => 'SMS Template deleted successfully']);
+		} catch (Exception $e) {
+			DB::rollBack();
+			return response()->json(['success' => false, 'errors' => ['Exception Error' => $e->getMessage()]]);
 		}
 	}
 }
