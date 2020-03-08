@@ -2,7 +2,7 @@
 
 namespace Abs\SmsPkg;
 use Abs\AttributePkg\FieldType;
-use Abs\Basic\Config;
+use Abs\BasicPkg\Config;
 use Abs\SmsPkg\SmsTemplate;
 use Abs\SmsPkg\SmsTemplateParameter;
 use App\Http\Controllers\Controller;
