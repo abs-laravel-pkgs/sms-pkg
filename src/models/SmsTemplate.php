@@ -15,6 +15,7 @@ class SmsTemplate extends Model {
 	protected $fillable = [
 		'company_id',
 		'name',
+		'vendor_template_id',
 		'description',
 		'content',
 	];
