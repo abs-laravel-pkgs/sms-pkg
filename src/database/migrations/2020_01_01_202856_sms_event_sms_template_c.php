@@ -18,9 +18,19 @@ class SmsEventSmsTemplateC extends Migration {
 				$table->unsignedInteger('sms_event_id');
 				$table->unsignedInteger('sms_template_id');
 
+				$table->unsignedInteger('created_by_id')->nullable();
+				$table->unsignedInteger('updated_by_id')->nullable();
+				$table->unsignedInteger('deleted_by_id')->nullable();
+				$table->timestamps();
+				$table->softdeletes();
+
 				$table->foreign('company_id')->references('id')->on('companies')->onDelete('CASCADE')->onUpdate('cascade');
 				$table->foreign('sms_event_id')->references('id')->on('configs')->onDelete('CASCADE')->onUpdate('cascade');
 				$table->foreign('sms_template_id')->references('id')->on('sms_templates')->onDelete('CASCADE')->onUpdate('cascade');
+
+				$table->foreign('created_by_id')->references('id')->on('users')->onDelete('SET NULL')->onUpdate('cascade');
+				$table->foreign('updated_by_id')->references('id')->on('users')->onDelete('SET NULL')->onUpdate('cascade');
+				$table->foreign('deleted_by_id')->references('id')->on('users')->onDelete('SET NULL')->onUpdate('cascade');
 
 				$table->unique(["company_id", "sms_event_id"]);
 			});

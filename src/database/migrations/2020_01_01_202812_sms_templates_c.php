@@ -16,6 +16,7 @@ class SmsTemplatesC extends Migration {
 				$table->increments('id');
 				$table->unsignedInteger('company_id');
 				$table->string('name', 191);
+				$table->string('vendor_template_id', 30)->nullable();
 				$table->string('description', 255)->nullable();
 				$table->string('content', 255);
 
