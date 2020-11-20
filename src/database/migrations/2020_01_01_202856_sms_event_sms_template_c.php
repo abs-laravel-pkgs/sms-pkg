@@ -11,8 +11,8 @@ class SmsEventSmsTemplateC extends Migration {
 	 * @return void
 	 */
 	public function up() {
-		if (!Schema::hasTable('sms_event_sms_template')) {
-			Schema::create('sms_event_sms_template', function (Blueprint $table) {
+		if (!Schema::hasTable('sms_event_sms_templates')) {
+			Schema::create('sms_event_sms_templates', function (Blueprint $table) {
 				$table->increments('id');
 				$table->unsignedInteger('company_id');
 				$table->unsignedInteger('sms_event_id');
@@ -43,6 +43,6 @@ class SmsEventSmsTemplateC extends Migration {
 	 * @return void
 	 */
 	public function down() {
-		Schema::dropIfExists('sms_event_sms_template');
+		Schema::dropIfExists('sms_event_sms_templates');
 	}
 }
